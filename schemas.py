@@ -18,8 +18,9 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
@@ -43,8 +44,9 @@ class Meeting(MeetingBase):
     id: int
     organizer_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 # Agenda Schemas
 class AgendaBase(BaseModel):
@@ -61,8 +63,9 @@ class Agenda(AgendaBase):
     id: int
     meeting_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class AgendaUpdate(BaseModel):
     title: Optional[str] = None
@@ -86,5 +89,6 @@ class ActionItem(ActionItemBase):
     id: int
     agenda_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
