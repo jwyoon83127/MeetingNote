@@ -26,8 +26,12 @@ app.include_router(users.router, prefix="/api")
 app.include_router(meetings.router, prefix="/api")
 app.include_router(agendas.router, prefix="/api")
 
-# Serve static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Serve static files with absolute path
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if not os.path.exists(static_dir):
+    # Fallback for local dev if index.html is in root (unlikely but safe)
+    static_dir = "static"
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/")
 def read_root():
