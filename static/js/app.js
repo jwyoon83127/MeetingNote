@@ -25,6 +25,7 @@ let users = [
 ];
 
 let expandedMeetingId = null;
+let currentCalendarDate = new Date();
 
 // --- 2. Views Configuration ---
 const views = {
@@ -102,6 +103,74 @@ const views = {
             </div>
         </div>
     `,
+    calendar: () => {
+        const year = currentCalendarDate.getFullYear();
+        const month = currentCalendarDate.getMonth();
+        const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+
+        // Calendar logic
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        let daysHtml = '';
+        // Padding for previous month
+        for (let i = 0; i < firstDay; i++) {
+            daysHtml += `<div class="p-4 border-b border-r border-slate-100 bg-slate-50/50"></div>`;
+        }
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}.${(month + 1).toString().padStart(2, '0')}.${d.toString().padStart(2, '0')}`;
+            const dayMeetings = meetings.filter(m => m.date.startsWith(dateStr));
+            const isToday = new Date().toDateString() === new Date(year, month, d).toDateString();
+
+            daysHtml += `
+                <div class="p-4 border-b border-r border-slate-100 min-h-[120px] bg-white hover:bg-slate-50 transition-all group">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-sm font-bold ${isToday ? 'w-7 h-7 flex items-center justify-center bg-brand-600 text-white rounded-full' : 'text-slate-600'}">${d}</span>
+                    </div>
+                    <div class="space-y-1">
+                        ${dayMeetings.map(m => `
+                            <div onclick="event.stopPropagation(); navigateTo('meetings'); toggleMeetingAgendas(${m.id});" class="text-[10px] p-1.5 rounded-md bg-brand-50 text-brand-700 font-bold truncate cursor-pointer hover:bg-brand-100 transition-all border border-brand-100">
+                                ${m.title}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="space-y-8">
+                <header class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-900 mb-1">회의 일정 관리</h2>
+                        <p class="text-slate-500">달력에서 회정 일정을 한눈에 확인하세요.</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                        <button onclick="changeCalendarMonth(-1)" class="p-2 hover:bg-slate-50 rounded-xl transition-all">
+                            <i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i>
+                        </button>
+                        <span class="text-lg font-bold text-slate-800 min-w-[100px] text-center">${year}년 ${monthNames[month]}</span>
+                        <button onclick="changeCalendarMonth(1)" class="p-2 hover:bg-slate-50 rounded-xl transition-all">
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-slate-600"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
+                    <div class="grid grid-cols-7 bg-slate-50 border-b border-slate-200">
+                        ${['일', '월', '화', '수', '목', '금', '토'].map(d => `
+                            <div class="py-4 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">${d}</div>
+                        `).join('')}
+                    </div>
+                    <div class="grid grid-cols-7">
+                        ${daysHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    },
     meetings: () => `
         <div class="space-y-8">
             <header class="flex justify-between items-center">
@@ -460,6 +529,11 @@ window.navigateTo = (viewId, data = null) => {
     } catch (e) {
         console.error('Navigation transition error:', e);
     }
+};
+
+window.changeCalendarMonth = (delta) => {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+    window.navigateTo('calendar');
 };
 
 window.toggleMeetingAgendas = (id) => {
