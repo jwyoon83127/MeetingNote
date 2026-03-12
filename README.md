@@ -1,4 +1,4 @@
-# MeetingHub Execution Guide
+# 경영집행위원회 회의록 관리 시스템 실행 가이드
 
 This project is built with FastAPI and requires a PostgreSQL 15 database.
 

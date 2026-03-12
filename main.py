@@ -20,7 +20,7 @@ from routers import users, meetings, agendas
 # Create tables
 # models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="MeetingHub API", description="Corporate Meeting Minutes Management System")
+app = FastAPI(title="경영집행위원회 API", description="경영집행위원회 회의록 관리 시스템")
 
 app.include_router(users.router, prefix="/api")
 app.include_router(meetings.router, prefix="/api")

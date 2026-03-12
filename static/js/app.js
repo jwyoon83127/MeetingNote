@@ -1,8 +1,8 @@
 /**
- * MeetingHub Frontend - Vanilla JS with Simple Routing and Agenda CUD
+ * 경영집행위원회 Frontend - Vanilla JS with Simple Routing and Agenda CUD
  */
 
-console.log('MeetingHub Script Loading...');
+console.log('경영집행위원회 Script Loading...');
 
 // --- 1. Global Data State ---
 let meetings = [
@@ -657,7 +657,7 @@ window.deleteUser = (id) => {
 
 // --- 4. Initialization ---
 function initApp() {
-    console.log('App Initializing...');
+    console.log('경영집행위원회 App Initializing...');
     if (window.navigateTo) {
         window.navigateTo('dashboard');
     } else {
