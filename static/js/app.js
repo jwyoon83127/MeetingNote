@@ -151,7 +151,14 @@ const views = {
                         <button onclick="changeCalendarMonth(-1)" class="p-2 hover:bg-slate-50 rounded-xl transition-all">
                             <i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i>
                         </button>
-                        <span class="text-lg font-bold text-slate-800 min-w-[100px] text-center">${year}년 ${monthNames[month]}</span>
+                        <div class="flex items-center gap-2">
+                            <select id="cal-year-select" onchange="updateCalendar()" class="bg-white border-none font-bold text-slate-800 focus:ring-0 cursor-pointer">
+                                ${Array.from({ length: 11 }, (_, i) => (year - 5) + i).map(y => `<option value="${y}" ${y === year ? 'selected' : ''}>${y}년</option>`).join('')}
+                            </select>
+                            <select id="cal-month-select" onchange="updateCalendar()" class="bg-white border-none font-bold text-slate-800 focus:ring-0 cursor-pointer">
+                                ${monthNames.map((name, i) => `<option value="${i}" ${i === month ? 'selected' : ''}>${name}</option>`).join('')}
+                            </select>
+                        </div>
                         <button onclick="changeCalendarMonth(1)" class="p-2 hover:bg-slate-50 rounded-xl transition-all">
                             <i data-lucide="chevron-right" class="w-5 h-5 text-slate-600"></i>
                         </button>
@@ -533,6 +540,13 @@ window.navigateTo = (viewId, data = null) => {
 
 window.changeCalendarMonth = (delta) => {
     currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+    window.navigateTo('calendar');
+};
+
+window.updateCalendar = () => {
+    const year = parseInt(document.getElementById('cal-year-select').value);
+    const month = parseInt(document.getElementById('cal-month-select').value);
+    currentCalendarDate = new Date(year, month, 1);
     window.navigateTo('calendar');
 };
 
