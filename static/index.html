@@ -148,10 +148,31 @@
     </div>
 
     <!-- App Script -->
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js" onerror="console.error('Failed to load app.js from /static/js/app.js')"></script>
     <script>
-        // Initialize icons
-        lucide.createIcons();
+        // Check if navigation is defined
+        window.addEventListener('load', () => {
+            console.log('Window Load Event - Lucide version:', window.lucide ? 'Available' : 'Missing');
+            if (typeof navigateTo === 'undefined') {
+                console.error('CRITICAL: navigateTo is not defined. app.js might have failed to load or execute.');
+                document.getElementById('content-area').innerHTML = `
+                    <div class="p-10 text-rose-600 bg-rose-50 rounded-2xl border border-rose-100 flex flex-col items-center gap-4">
+                        <i data-lucide="alert-triangle" class="w-12 h-12"></i>
+                        <div class="text-center">
+                            <h2 class="text-xl font-bold mb-2">스크립트 로드 실패</h2>
+                            <p>애플리케이션 스크립트를 불러오지 못했습니다. 페이지를 새로고침하거나 관리자에게 문의하세요.</p>
+                            <p class="text-sm mt-2 opacity-70">Path: /static/js/app.js</p>
+                        </div>
+                    </div>
+                `;
+                if (window.lucide) lucide.createIcons();
+            }
+        });
+
+        // Initialize static icons
+        if (window.lucide) {
+            lucide.createIcons();
+        }
     </script>
 </body>
 

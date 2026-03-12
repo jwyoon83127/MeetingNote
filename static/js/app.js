@@ -2,7 +2,9 @@
  * MeetingHub Frontend - Vanilla JS with Simple Routing and Agenda CUD
  */
 
-// --- Global Data State ---
+console.log('MeetingHub Script Loading...');
+
+// --- 1. Global Data State ---
 let meetings = [
     { id: 1, title: 'Q1 마케팅 전략 수립 회의', date: '2024.03.12 14:00', location: '제1회의실', status: '진행중' },
     { id: 2, title: '신규 기능 디자인 리뷰', date: '2024.03.13 10:00', location: '제2회의실', status: '예정됨' },
@@ -24,7 +26,7 @@ let users = [
 
 let expandedMeetingId = null;
 
-// --- Views Configuration ---
+// --- 2. Views Configuration ---
 const views = {
     dashboard: () => `
         <header class="flex justify-between items-center mb-10">
@@ -378,7 +380,7 @@ const views = {
                             <tr class="hover:bg-slate-50 transition-all">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">${u.full_name.charAt(0)}</div>
+                                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">${u.full_name ? u.full_name.charAt(0) : '?'}</div>
                                         <span class="font-bold text-slate-800">${u.full_name}</span>
                                     </div>
                                 </td>
@@ -407,35 +409,64 @@ const views = {
     `
 };
 
-// --- Routing Function ---
+// --- 3. Functional Components (Attached to Window) ---
 window.navigateTo = (viewId, data = null) => {
-    if (!views[viewId]) return;
+    console.log('Navigating to:', viewId);
+    if (!views[viewId]) {
+        console.error('View not found:', viewId);
+        return;
+    }
 
     const ca = document.getElementById('content-area');
-    if (ca) {
+    if (!ca) {
+        console.error('Content area not found!');
+        return;
+    }
+
+    try {
+        // Fade out
         ca.style.opacity = '0';
         ca.style.transform = 'translateY(10px)';
 
         setTimeout(() => {
-            ca.innerHTML = views[viewId](data);
-            if (window.lucide) { window.lucide.createIcons(); }
-
-            // Side effect: update active nav state
-            document.querySelectorAll('aside nav a').forEach(link => {
-                link.classList.remove('sidebar-item-active', 'bg-brand-50', 'text-brand-700');
-                if (link.id === `nav-${viewId}`) {
-                    link.classList.add('sidebar-item-active');
+            try {
+                ca.innerHTML = views[viewId](data);
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                } else {
+                    console.warn('Lucide not available for dynamic content');
                 }
-            });
 
-            ca.style.transition = 'all 0.3s ease';
-            ca.style.opacity = '1';
-            ca.style.transform = 'translateY(0)';
-        }, 100);
+                // Update active state in sidebar
+                document.querySelectorAll('aside nav a').forEach(link => {
+                    link.classList.remove('sidebar-item-active', 'bg-brand-50', 'text-brand-700');
+                    if (link.id === `nav-${viewId}`) {
+                        link.classList.add('sidebar-item-active');
+                    }
+                });
+
+                // Fade in
+                ca.style.opacity = '1';
+                ca.style.transform = 'translateY(0)';
+            } catch (renderError) {
+                console.error('Rendering error:', renderError);
+                ca.innerHTML = `<div class="p-10 text-rose-600 bg-rose-50 rounded-2xl border border-rose-100">
+                    <h2 class="text-xl font-bold mb-2">화면 로딩 오류</h2>
+                    <p>${renderError.message}</p>
+                </div>`;
+                ca.style.opacity = '1';
+            }
+        }, 150);
+    } catch (e) {
+        console.error('Navigation transition error:', e);
     }
 };
 
-// --- Toast Notification System ---
+window.toggleMeetingAgendas = (id) => {
+    expandedMeetingId = (expandedMeetingId === id) ? null : id;
+    window.navigateTo('meetings');
+};
+
 window.showToast = (message, type = 'success') => {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -443,11 +474,8 @@ window.showToast = (message, type = 'success') => {
     const toast = document.createElement('div');
     toast.className = `toast-notification glass px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-l-4 ${type === 'success' ? 'border-brand-500' : 'border-rose-500'} bg-white`;
 
-    const icon = type === 'success' ? 'check-circle' : 'alert-circle';
-    const iconColor = type === 'success' ? 'text-brand-500' : 'text-rose-500';
-
     toast.innerHTML = `
-        <i data-lucide="${icon}" class="w-5 h-5 ${iconColor}"></i>
+        <i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-5 h-5 ${type === 'success' ? 'text-brand-500' : 'text-rose-500'}"></i>
         <span class="text-sm font-bold text-slate-700">${message}</span>
     `;
 
@@ -460,12 +488,6 @@ window.showToast = (message, type = 'success') => {
     }, 3000);
 };
 
-// --- Helper Functions ---
-window.toggleMeetingAgendas = (id) => {
-    expandedMeetingId = (expandedMeetingId === id) ? null : id;
-    navigateTo('meetings');
-};
-
 window.handleMeetingCreate = (e) => {
     e.preventDefault();
     const title = document.getElementById('m-title').value;
@@ -476,15 +498,15 @@ window.handleMeetingCreate = (e) => {
     const newId = meetings.length > 0 ? Math.max(...meetings.map(m => m.id)) + 1 : 1;
     meetings.push({ id: newId, title, date, location, status: '예정됨' });
 
-    showToast('회의가 등록되었습니다.');
-    navigateTo('meetings');
+    window.showToast('회의가 등록되었습니다.');
+    window.navigateTo('meetings');
 };
 
 window.showAgendaForm = (isEdit = false, meetingId = null) => {
     const container = document.getElementById('agenda-form-container');
     if (!container) {
-        navigateTo('agendas');
-        setTimeout(() => showAgendaForm(isEdit, meetingId), 150);
+        window.navigateTo('agendas');
+        setTimeout(() => window.showAgendaForm(isEdit, meetingId), 200);
         return;
     }
     container.classList.remove('hidden');
@@ -500,7 +522,10 @@ window.showAgendaForm = (isEdit = false, meetingId = null) => {
     }
 };
 
-window.hideAgendaForm = () => { if (document.getElementById('agenda-form-container')) document.getElementById('agenda-form-container').classList.add('hidden'); };
+window.hideAgendaForm = () => {
+    const el = document.getElementById('agenda-form-container');
+    if (el) el.classList.add('hidden');
+};
 
 window.handleAgendaSubmit = (e) => {
     e.preventDefault();
@@ -517,20 +542,20 @@ window.handleAgendaSubmit = (e) => {
         const newId = agendas.length > 0 ? Math.max(...agendas.map(a => a.id)) + 1 : 1;
         agendas.push({ id: newId, meetingId, title, author, description, status: '예정됨', reviews: [] });
     }
-    hideAgendaForm();
-    showToast(id ? '안건이 수정되었습니다.' : '안건이 등록되었습니다.');
+    window.hideAgendaForm();
+    window.showToast(id ? '안건이 수정되었습니다.' : '안건이 등록되었습니다.');
 
     if (expandedMeetingId) {
-        navigateTo('meetings');
+        window.navigateTo('meetings');
     } else {
-        navigateTo('agendas');
+        window.navigateTo('agendas');
     }
 };
 
 window.editAgenda = (id) => {
     const item = agendas.find(a => a.id === id);
     if (item) {
-        showAgendaForm(true, item.meetingId);
+        window.showAgendaForm(true, item.meetingId);
         document.getElementById('agenda-id').value = item.id;
         document.getElementById('agenda-title').value = item.title;
         document.getElementById('agenda-author').value = item.author || 'Jane Doe';
@@ -541,11 +566,11 @@ window.editAgenda = (id) => {
 window.deleteAgenda = (id) => {
     if (confirm('정말로 이 안건을 삭제하시겠습니까?')) {
         agendas = agendas.filter(a => a.id !== id);
-        showToast('안건이 삭제되었습니다.');
+        window.showToast('안건이 삭제되었습니다.');
         if (expandedMeetingId) {
-            navigateTo('meetings');
+            window.navigateTo('meetings');
         } else {
-            navigateTo('agendas');
+            window.navigateTo('agendas');
         }
     }
 };
@@ -566,11 +591,11 @@ window.handleReviewSubmit = (agendaId) => {
             date: new Date().toISOString().split('T')[0].replace(/-/g, '.')
         });
         input.value = '';
-        showToast('검토 의견이 등록되었습니다.');
+        window.showToast('검토 의견이 등록되었습니다.');
         if (expandedMeetingId) {
-            navigateTo('meetings');
+            window.navigateTo('meetings');
         } else {
-            navigateTo('agendas');
+            window.navigateTo('agendas');
         }
     }
 };
@@ -587,7 +612,10 @@ window.showUserForm = (isEdit = false) => {
     }
 };
 
-window.hideUserForm = () => { if (document.getElementById('user-form-container')) document.getElementById('user-form-container').classList.add('hidden'); };
+window.hideUserForm = () => {
+    const el = document.getElementById('user-form-container');
+    if (el) el.classList.add('hidden');
+};
 
 window.handleUserSubmit = (e) => {
     e.preventDefault();
@@ -603,15 +631,15 @@ window.handleUserSubmit = (e) => {
         const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
         users.push({ id: newId, full_name, email, role });
     }
-    hideUserForm();
-    showToast(id ? '사용자 정보가 수정되었습니다.' : '사용자가 등록되었습니다.');
-    navigateTo('users');
+    window.hideUserForm();
+    window.showToast(id ? '사용자 정보가 수정되었습니다.' : '사용자가 등록되었습니다.');
+    window.navigateTo('users');
 };
 
 window.editUser = (id) => {
     const user = users.find(u => u.id === id);
     if (user) {
-        showUserForm(true);
+        window.showUserForm(true);
         document.getElementById('user-id').value = user.id;
         document.getElementById('user-name').value = user.full_name;
         document.getElementById('user-email').value = user.email;
@@ -622,13 +650,35 @@ window.editUser = (id) => {
 window.deleteUser = (id) => {
     if (confirm('정말로 이 사용자를 삭제하시겠습니까?')) {
         users = users.filter(u => u.id !== id);
-        showToast('사용자가 삭제되었습니다.');
-        navigateTo('users');
+        window.showToast('사용자가 삭제되었습니다.');
+        window.navigateTo('users');
     }
 };
 
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('MeetingHub App Initialized');
-    window.navigateTo('dashboard');
-});
+// --- 4. Initialization ---
+function initApp() {
+    console.log('App Initializing...');
+    if (window.navigateTo) {
+        window.navigateTo('dashboard');
+    } else {
+        console.error('navigateTo function not found!');
+    }
+}
+
+// Global error handler
+window.onerror = function (message, source, lineno, colno, error) {
+    console.error('GLOBAL ERROR:', message, 'at', source, ':', lineno);
+    const ca = document.getElementById('content-area');
+    if (ca) {
+        ca.innerHTML = `<div class="p-10 text-rose-600 bg-rose-50 rounded-2xl border border-rose-100">
+            <h2 class="text-xl font-bold mb-2">애플리케이션 실행 오류</h2>
+            <p>${message}</p>
+        </div>`;
+    }
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
